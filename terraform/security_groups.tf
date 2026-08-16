@@ -1,0 +1,90 @@
+# This is the Terraform configuration for creating AWS security groups. It defines three security groups: one for the target application, one for the scanner/jump host, and a default security group. The target security group allows HTTP and optional HTTPS ingress from a specified CIDR block, while the scanner security group allows all egress traffic. Additionally, there are conditional ingress rules for SSH access to both the target and scanner security groups based on a variable that enables or disables SSH access.
+resource "aws_security_group" "target_sg" {
+  name        = "${var.project_name}-${var.environment}-target-sg"
+  description = "Target SG for vulnerable app lab"
+  vpc_id      = aws_vpc.this.id
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-target-sg"
+  }
+
+  ingress {
+    description = "HTTP for DVWA / DAST target"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_ingress_cidr]
+  }
+
+  ingress {
+    description = "HTTPS (optional)"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_ingress_cidr]
+  }
+
+  egress {
+    description = "Allow all egress"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.this.id
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-default-sg"
+  }
+
+  egress {
+    description = "Allow all egress"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "scanner_sg" {
+  name        = "${var.project_name}-${var.environment}-scanner-sg"
+  description = "Scanner/jump host SG"
+  vpc_id      = aws_vpc.this.id
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-scanner-sg"
+  }
+
+  egress {
+    description = "Allow all egress"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "target_ssh_desktop" {
+  count = var.enable_ssh ? 1 : 0
+
+  security_group_id = aws_security_group.target_sg.id
+  description       = "Desktop"
+  ip_protocol       = "tcp"
+  from_port         = 22
+  to_port           = 22
+  cidr_ipv4         = "172.58.120.244/32"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "scanner_ssh_desktop" {
+  count = var.enable_ssh ? 1 : 0
+
+  security_group_id = aws_security_group.scanner_sg.id
+  description       = "Desktop"
+  ip_protocol       = "tcp"
+  from_port         = 22
+  to_port           = 22
+  cidr_ipv4         = "172.58.120.244/32"
+}
