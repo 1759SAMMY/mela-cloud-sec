@@ -3,7 +3,7 @@ terraform {
   backend "s3" {
     bucket         = "mela-cloud-sec-tf-state-448842988111"
     key            = "devsec/terraform.tfstate"
-    region         = "us-east-1"
+    region         = "us-east-2"
     dynamodb_table = "mela-cloud-sec-tf-locks"
     encrypt        = true
   }
