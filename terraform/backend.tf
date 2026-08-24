@@ -6,6 +6,6 @@ terraform {
     region         = "us-east-2"
     dynamodb_table = "mela-cloud-sec-tf-locks"
     encrypt        = true
-    use_lockfile   = true 
+    use_lockfile   = true
   }
 }
