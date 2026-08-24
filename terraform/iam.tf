@@ -61,3 +61,4 @@ resource "aws_iam_role_policy" "events_invoke_ssm_policy" {
     }]
   })
 }
+
